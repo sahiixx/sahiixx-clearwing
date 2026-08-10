@@ -1,176 +1,128 @@
-# Clearwing — Autonomous AI Pentesting
+# sahiixx-clearwing
 
-> Inspired by [Lazarus-AI/clearwing](https://github.com/Lazarus-AI/clearwing) (910 ★)
+![Python](https://img.shields.io/badge/python-3.11+-blue) ![Agentic](https://img.shields.io/badge/agentic-harness-purple)
 
 Most security tools produce **reports**. Clearwing produces **proof**.
 
-It is an autonomous AI pentesting swarm that doesn't just audit your code — it
-**actively probes** your APIs, fuzzes your inputs, and chains vulnerabilities
-to demonstrate real exploitability. Every finding includes a reproducible
-payload, not just a theoretical description.
+## Table of Contents
 
-## The Problem
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Agentic Architecture](#agentic-architecture)
+- [Model Routing](#model-routing)
+- [Project Layout](#project-layout)
+- [Development](#development)
+- [Related Repositories](#related-repositories)
 
-- Traditional SAST/DAST tools find 1000s of "vulnerabilities" — 90% are false positives
-- Manual pentesting is slow ($5K–$50K per engagement, weeks of delay)
-- AI audit swarms produce great reports but never actually *test* anything
-- Dev teams ignore security findings because they can't reproduce them
+## Overview
 
-## The Solution
+Most security tools produce **reports**. Clearwing produces **proof**.
 
-Clearwing combines a **5-agent reasoning swarm** with an **active probing engine**:
-
-```
-Recon → Scan → Exploit → Report → Verify
-  ↑_________________________________↓
-              (feedback loop)
-```
-
-1. **Recon Agent** — Maps attack surface (APIs, endpoints, params, headers)
-2. **Scanner Agent** — Actively probes with payloads (SQLi, XSS, SSRF, IDOR)
-3. **Exploit Agent** — Chains findings into proof-of-concept exploits
-4. **Report Agent** — Generates markdown reports with reproducible curls
-5. **Verify Agent** — Re-runs every exploit to confirm it still works
-
-## Why It's Different
-
-| | Clearwing (Lazarus-AI) | Clearwing (this repo) |
-|---|---|---|
-| **Approach** | Anthropic Glasswing inspired | Multi-agent swarm + active probing |
-| **Probing** | Static analysis only | **Live HTTP/API fuzzing** |
-| **Payloads** | Theoretical | **Reproducible curl commands** |
-| **Chaining** | None | **Auto-chains findings** (e.g., IDOR → SSRF → RCE) |
-| **Memory** | None | **Titans surprise-weighted memory** — learns from past pentests |
-| **Cost** | Unknown | **Open source + local LLM** (Ollama) |
-| **Scope** | General | **Web/API focused** with vertical depth |
+| | |
+|---|---|
+| **Stack** | python |
+| **Frameworks** | langchain, pydantic |
+| **Tests** | yes |
+| **Commits** | 2 |
+| **Last activity** | 2026-08-10 |
+| **Visibility** | public |
 
 ## Quick Start
 
+### Install
+
 ```bash
-pip install sahiixx-clearwing
-
-# Quick scan against a target
-clearwing scan https://api.example.com --depth 2 --output ./pentest-report/
-
-# Full autonomous pentest
-clearwing pentest https://api.example.com \
-  --scope full \
-  --model llama3.1 \
-  --memory ./titans-memory.json
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt   # or: pip install -e .
 ```
 
-## Architecture
+### Run
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Recon     │────▶│   Scanner   │────▶│   Exploit   │
-│   Agent     │     │   Agent     │     │   Agent     │
-└─────────────┘     └─────────────┘     └─────────────┘
-       ↑                   │                   │
-       │                   ▼                   ▼
-       │            ┌─────────────┐     ┌─────────────┐
-       │            │   Report    │◄────│   Verify    │
-       │            │   Agent     │     │   Agent     │
-       │            └─────────────┘     └─────────────┘
-       │                   │
-       └───────────────────┘
-              (feedback loop)
-```
-
-## Active Probing Engine
-
-The scanner doesn't guess — it learns:
-
-```python
-from clearwing.scanner import ActiveScanner
-
-scanner = ActiveScanner(target="https://api.example.com")
-scanner.add_payload("sql_injection", "' OR '1'='1")
-scanner.add_payload("xss", "<script>alert(1)</script>")
-scanner.add_payload("ssrf", "http://169.254.169.254/")
-
-results = scanner.run()
-# Each result includes: payload, response_snippet, confidence, curl_repro
-```
-
-## Swarm Intelligence
-
-Each agent is a specialized LLM prompt with access to prior findings:
-
-```python
-from clearwing.swarm import PentestSwarm
-
-swarm = PentestSwarm(model="llama3.1", memory_path="./memory.json")
-report = swarm.run(target="https://api.example.com", scope="full")
-```
-
-## Titans Memory Integration
-
-Clearwing integrates with [sahiixx-titans-memory](https://github.com/sahiixx/sahiixx-titans-memory) to remember:
-
-- Which payloads worked against which tech stacks
-- Which endpoints are "surprising" (unexpectedly vulnerable)
-- Which agents produce the most exploitable findings
-
-Over time, the swarm gets **better** at pentesting the same target.
-
-## Benchmarks
-
-On OWASP Juice Shop (standard pentest target):
-
-| Metric | Burp Suite | Clearwing (Lazarus) | Clearwing (this) |
-|---|---|---|---|
-| SQLi found | Manual only | 2 | **4** |
-| XSS found | 6 | 3 | **7** |
-| SSRF found | Manual only | 0 | **1** |
-| False positive rate | ~15% | ~30% | **~8%** |
-| Time to first exploit | Hours | N/A (static) | **~3 min** |
-| Reproducible payloads | Yes | No | **Yes** |
-
-## Output Format
-
-Every finding includes a reproducible report:
-
-```markdown
-# Finding: SQL Injection in /api/search
-
-## Risk: CRITICAL
-
-## Proof of Concept
 ```bash
-curl -X POST https://api.example.com/api/search \
-  -H "Content-Type: application/json" \
-  -d '{"q": "' OR '1'='1"}'
+# Entry point not auto-detected; inspect the layout below.
 ```
 
-## Response Snippet
-```json
-{"results": [...all records...]}
-```
+## Agentic Architecture
 
-## Impact
-Attackers can extract the entire database without authentication.
+This repository participates in the [sahiixx agentic harness](https://github.com/sahiixx/agentic-harness) — a shared
+contract for how agents plan, act, verify, and recover across all repos in this account.
 
-## Remediation
-Use parameterized queries. See OWASP Cheat Sheet.
-```
+**Signal strength:** agentic density score `56` (references to agent,
+tool-call, LLM, RAG and orchestration primitives across the source tree).
 
-## Ecosystem
+### Patterns in play
 
-| Repo | Role |
+| Pattern | Role here |
 |---|---|
-| [titans-memory](https://github.com/sahiixx/sahiixx-titans-memory) | Learns which payloads work per target |
-| [graph-sight](https://github.com/sahiixx/sahiixx-graph-sight) | Trust graph for agent findings |
-| [claude-skills](https://github.com/sahiixx/sahiixx-claude-skills) | Pentester skill for Claude Code |
-| [friday-os](https://github.com/sahiixx/friday-os) | Voice-first orchestration |
-| [hermesclaw](https://github.com/sahiixx/hermesclaw) | WeChat alert bridge for critical findings |
+| **Prompt Chaining** | Deterministic multi-step pipelines where subtasks are known upfront |
+| **Routing** | Classify input, dispatch to the specialist path (cheap model for easy work) |
+| **Parallelization** | Independent subtasks fan out; results aggregated programmatically |
+| **Orchestrator–Workers** | Central planner decomposes dynamically when subtasks can't be predicted |
+| **Evaluator–Optimizer** | Generator/judge split with explicit rubric; bounded retry |
+| **ReAct** | Interleaved reason → act → observe for adaptive tool use |
+| **Reflection** | Self-critique before emitting a final answer |
 
-## Install
+> Escalation rule: start with the simplest pattern that solves the problem. Add
+> Reflection only when verification fails, Planning only when dependencies emerge,
+> Multi-Agent only when work exceeds a single role or context window.
+
+### Reliability envelope
+
+- **Bounded execution** — every loop has a max-iteration and wall-clock ceiling.
+- **Tool sandboxing** — filesystem/network side effects are isolated and reversible.
+- **Guardrail layering** — validate at input, mid-loop, and output.
+- **Context engineering** — select, compress, isolate; never let raw history grow unbounded.
+- **Self-verification** — check intermediate output against constraints before continuing.
+
+## Model Routing
+
+Agent work in this repo routes through Azure AI Foundry. See [`AGENTS.md`](./AGENTS.md)
+for the full contract.
+
+| Purpose | Deployment | Endpoint |
+|---|---|---|
+| Default / general | `gpt-5.6-sol` | `/openai/v1/chat/completions` |
+| Deep reasoning | `claude-opus-5` | `/openai/v1/responses` **only** |
+| Embeddings | `text-embedding-3-small` | `/openai/v1/embeddings` |
 
 ```bash
-pip install sahiixx-clearwing
+export AZURE_FOUNDRY_API_KEY=...        # never commit this
+export AZURE_FOUNDRY_BASE_URL=https://<resource>.openai.azure.com/openai/v1
 ```
 
-## License
+> **Gotcha:** Claude deployments on Azure return `404 api_not_supported` on
+> `/chat/completions`. They answer **only** via the Responses API.
 
-MIT
+## Project Layout
+
+```
+AGENTS.md
+LICENSE
+README.md
+pyproject.toml
+src/
+tests/
+```
+
+## Development
+
+```bash
+# lint / format before committing
+ruff check . && ruff format .
+
+# run the CI check locally
+gh workflow run hermes-azure-check.yml
+```
+
+Secrets live in environment variables and CI secrets — never in tracked files.
+
+## Related Repositories
+
+Part of a 84-repository workspace sharing one agentic contract:
+
+- **[agentic-harness](https://github.com/sahiixx/agentic-harness)** — patterns, contracts, and reference implementations
+- `AGENTS.md` in every repo pins identical model routing
+
+---
+
+<sub>README maintained by the agentic harness · last regenerated 2026-08-10</sub>
